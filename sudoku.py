@@ -12,8 +12,8 @@ def init_colors():
     curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)  # Bright red
-    curses.init_pair(9, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Bright green
+    curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)  
+    curses.init_pair(9, curses.COLOR_GREEN, curses.COLOR_BLACK)  
 
 
 def print_board(stdscr, board, cur_row, cur_col):
