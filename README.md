@@ -14,4 +14,4 @@ A simple Sudoku game that can be played in the terminal. This game allows users 
 4. Run the following command to start the game:
 
 ```bash
-python sudoku.py
+python3 sudoku.py
