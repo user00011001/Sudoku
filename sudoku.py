@@ -12,8 +12,8 @@ def init_colors():
     curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
     curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)  
-    curses.init_pair(9, curses.COLOR_GREEN, curses.COLOR_BLACK)  
+    curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(9, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
 
 def print_board(stdscr, board, cur_row, cur_col):
@@ -76,6 +76,13 @@ def solve_sudoku(board):
 def generate_puzzle(difficulty):
     full_board = [[0 for _ in range(9)] for _ in range(9)]
     solve_sudoku(full_board)
+
+    top_boxes = [(i, j) for i in range(3) for j in range(3)]
+    random.shuffle(top_boxes)
+    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    random.shuffle(nums)
+    for k, (i, j) in enumerate(top_boxes):
+        full_board[i][j] = nums[k]
 
     puzzle = copy.deepcopy(full_board)
     for _ in range(30 + difficulty * 5):
