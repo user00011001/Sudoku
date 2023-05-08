@@ -3,6 +3,21 @@ import random
 import copy
 
 
+def color_code(num):
+    colors = {
+        1: '\033[31m',  # Red
+        2: '\033[32m',  # Green
+        3: '\033[33m',  # Yellow
+        4: '\033[34m',  # Blue
+        5: '\033[35m',  # Magenta
+        6: '\033[36m',  # Cyan
+        7: '\033[37m',  # White
+        8: '\033[91m',  # Bright red
+        9: '\033[92m',  # Bright green
+    }
+    return colors[num] + str(num) + '\033[0m'
+
+
 def print_board(board):
     os.system('cls' if os.name == 'nt' else 'clear')
     for i in range(9):
@@ -11,7 +26,10 @@ def print_board(board):
         for j in range(9):
             if j % 3 == 0 and j != 0:
                 print("| ", end="")
-            print(board[i][j], end=" ")
+            if board[i][j] != 0:
+                print(color_code(board[i][j]), end=" ")
+            else:
+                print(board[i][j], end=" ")
         print()
 
 
