@@ -15,3 +15,11 @@ A simple Sudoku game that can be played in the terminal. This game allows users 
 
 ```bash
 python3 sudoku.py
+
+## Features
+
+- Generate Sudoku puzzles with varying difficulty levels: Easy, Medium, and Hard.
+- Play the game in the terminal with color-coded numbers.
+- Navigate through the puzzle using arrow keys.
+- Enter numbers directly and receive immediate feedback on the validity of the move.
+- Quit the game at any time by pressing the 'Q' or 'q' key.
