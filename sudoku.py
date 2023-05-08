@@ -1,36 +1,38 @@
 import os
 import random
 import copy
+import curses
 
 
-def color_code(num):
-    colors = {
-        1: '\033[31m',  # Red
-        2: '\033[32m',  # Green
-        3: '\033[33m',  # Yellow
-        4: '\033[34m',  # Blue
-        5: '\033[35m',  # Magenta
-        6: '\033[36m',  # Cyan
-        7: '\033[37m',  # White
-        8: '\033[91m',  # Bright red
-        9: '\033[92m',  # Bright green
-    }
-    return colors[num] + str(num) + '\033[0m'
+def init_colors():
+    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
+    curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+    curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
+    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)  # Bright red
+    curses.init_pair(9, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Bright green
 
 
-def print_board(board):
-    os.system('cls' if os.name == 'nt' else 'clear')
+def print_board(stdscr, board, cur_row, cur_col):
     for i in range(9):
         if i % 3 == 0 and i != 0:
-            print("- - - - - - - - - - -")
+            stdscr.addstr("- - - - - - - - - - -\n")
         for j in range(9):
             if j % 3 == 0 and j != 0:
-                print("| ", end="")
-            if board[i][j] != 0:
-                print(color_code(board[i][j]), end=" ")
+                stdscr.addstr("| ")
+            if i == cur_row and j == cur_col:
+                attr = curses.A_REVERSE
             else:
-                print(board[i][j], end=" ")
-        print()
+                attr = curses.A_NORMAL
+            if board[i][j] != 0:
+                stdscr.addstr(str(board[i][j]) + ' ',
+                              curses.color_pair(board[i][j]) | attr)
+            else:
+                stdscr.addstr("0 ", attr)
+        stdscr.addstr("\n")
 
 
 def is_valid_move(board, row, col, num):
@@ -83,34 +85,60 @@ def generate_puzzle(difficulty):
     return full_board, puzzle
 
 
-def main():
-    difficulty = int(
-        input("Choose difficulty level (1: Easy, 2: Medium, 3: Hard): "))
+def main(stdscr):
+    # Initialize curses screen
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    stdscr.keypad(True)
+    stdscr.clear()
+
+    # Initialize colors
+    init_colors()
+
+    stdscr.addstr(
+        0, 0, "Choose difficulty level (1: Easy, 2: Medium, 3: Hard): ")
+    stdscr.refresh()
+    difficulty = int(stdscr.getstr().decode())
     solution, board = generate_puzzle(difficulty)
 
+    row, col = 0, 0
+
     while True:
-        print_board(board)
-        move = input("Enter move (row, col, number): ")
+        stdscr.clear()
+        print_board(stdscr, board, row, col)
+        stdscr.addstr(11, 0, f"Current position: ({row+1}, {col+1})")
+        stdscr.refresh()
 
-        try:
-            row, col, num = map(int, move.split(','))
+        key = stdscr.getch()
+
+        if key == ord('q') or key == ord('Q'):
+            break
+        elif key == curses.KEY_UP and row > 0:
             row -= 1
+        elif key == curses.KEY_DOWN and row < 8:
+            row += 1
+        elif key == curses.KEY_LEFT and col > 0:
             col -= 1
-        except ValueError:
-            print("Invalid input. Press enter to try again.")
-            input()
-            continue
+        elif key == curses.KEY_RIGHT and col < 8:
+            col += 1
+        elif ord('1') <= key <= ord('9'):
+            num = key - ord('0')
 
-        if 0 <= row < 9 and 0 <= col < 9 and 1 <= num <= 9 and board[row][col] == 0:
-            if solution[row][col] == num:
-                board[row][col] = num
-            else:
-                print("Wrong move. Press enter to try again.")
-                input()
+            if board[row][col] == 0:
+                if solution[row][col] == num:
+                    board[row][col] = num
+                else:
+                    stdscr.addstr(
+                        12, 0, "Wrong move. Press any key to try again.")
+                    stdscr.refresh()
+                    stdscr.getch()
         else:
-            print("Invalid move. Press enter to try again.")
-            input()
+            stdscr.addstr(12, 0, "Invalid move. Press any key to try again.")
+            stdscr.refresh()
+            stdscr.getch()
 
+
+if __name__ == "__main__":
+    curses.wrapper(main)
 
 if __name__ == "__main__":
     main()
