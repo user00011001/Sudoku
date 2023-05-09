@@ -5,15 +5,8 @@ import curses
 
 
 def init_colors():
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)
-    curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
-    curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
-    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(9, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    for i in range(1, 10):
+        curses.init_pair(i, i, curses.COLOR_BLACK)
 
 
 def print_board(stdscr, board, cur_row, cur_col):
@@ -48,77 +41,60 @@ def is_valid_move(board, row, col, num):
     return True
 
 
+def next_empty_cell(board):
+    for i in range(9):
+        for j in range(9):
+            if board[i][j] == 0:
+                return i, j
+    return None, None
+
+
 def solve_sudoku(board):
-    def next_empty_cell(board):
-        for i in range(9):
-            for j in range(9):
-                if board[i][j] == 0:
-                    return i, j
-        return None, None
+    row, col = next_empty_cell(board)
+    if row is None:
+        return True
 
-    def solve(board):
-        row, col = next_empty_cell(board)
-        if row is None:
-            return True
+    for num in range(1, 10):
+        if is_valid_move(board, row, col, num):
+            board[row][col] = num
+            if solve_sudoku(board):
+                return True
+            board[row][col] = 0
 
-        for num in range(1, 10):
-            if is_valid_move(board, row, col, num):
-                board[row][col] = num
-                if solve(board):
-                    return True
-                board[row][col] = 0
-
-        return False
-
-    solve(board)
+    return False
 
 
 def generate_puzzle(difficulty):
-    # Initialize empty board
     board = [[0 for _ in range(9)] for _ in range(9)]
 
-    # Generate random solved board using backtracking algorithm
-    def solve(board):
-        for row in range(9):
-            for col in range(9):
-                if board[row][col] == 0:
-                    for num in range(1, 10):
-                        if is_valid_move(board, row, col, num):
-                            board[row][col] = num
-                            if solve(board):
-                                return True
-                            board[row][col] = 0
-                    return False
-        return True
+    # Fill the diagonal 3x3 boxes
+    for box in range(0, 9, 3):
+        nums = list(range(1, 10))
+        random.shuffle(nums)
+        for i in range(3):
+            for j in range(3):
+                board[box + i][box + j] = nums.pop()
 
-    solve(board)
+    solve_sudoku(board)
 
-    # Randomly remove numbers to create puzzle
+    # Remove numbers according to difficulty
     for _ in range(30 + difficulty * 5):
         while True:
             row, col = random.randint(0, 8), random.randint(0, 8)
             if board[row][col] != 0:
                 break
-        num = board[row][col]
         board[row][col] = 0
 
-        # Check that the same number does not appear multiple times in a row
-        if any(num == board[row][j] for j in range(9)):
-            board[row][col] = num
-
-    # Return solution and puzzle
     solution = copy.deepcopy(board)
-    solve(solution)
+    solve_sudoku(solution)
     return solution, board
 
 
 def main(stdscr):
-    # Initialize curses screen
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     stdscr.keypad(True)
     stdscr.clear()
 
-    # Initialize colors
     init_colors()
 
     stdscr.addstr(
@@ -166,6 +142,3 @@ def main(stdscr):
 
 if __name__ == "__main__":
     curses.wrapper(main)
-
-if __name__ == "__main__":
-    main()
