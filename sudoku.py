@@ -74,22 +74,42 @@ def solve_sudoku(board):
 
 
 def generate_puzzle(difficulty):
-    full_board = [[0 for _ in range(9)] for _ in range(9)]
-    solve_sudoku(full_board)
+    # Initialize empty board
+    board = [[0 for _ in range(9)] for _ in range(9)]
 
-    top_boxes = [(i, j) for i in range(3) for j in range(3)]
-    random.shuffle(top_boxes)
-    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    random.shuffle(nums)
-    for k, (i, j) in enumerate(top_boxes):
-        full_board[i][j] = nums[k]
+    # Generate random solved board using backtracking algorithm
+    def solve(board):
+        for row in range(9):
+            for col in range(9):
+                if board[row][col] == 0:
+                    for num in range(1, 10):
+                        if is_valid_move(board, row, col, num):
+                            board[row][col] = num
+                            if solve(board):
+                                return True
+                            board[row][col] = 0
+                    return False
+        return True
 
-    puzzle = copy.deepcopy(full_board)
+    solve(board)
+
+    # Randomly remove numbers to create puzzle
     for _ in range(30 + difficulty * 5):
-        row, col = random.randint(0, 8), random.randint(0, 8)
-        puzzle[row][col] = 0
+        while True:
+            row, col = random.randint(0, 8), random.randint(0, 8)
+            if board[row][col] != 0:
+                break
+        num = board[row][col]
+        board[row][col] = 0
 
-    return full_board, puzzle
+        # Check that the same number does not appear multiple times in a row
+        if any(num == board[row][j] for j in range(9)):
+            board[row][col] = num
+
+    # Return solution and puzzle
+    solution = copy.deepcopy(board)
+    solve(solution)
+    return solution, board
 
 
 def main(stdscr):
