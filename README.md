@@ -17,7 +17,7 @@ A simple Sudoku game that can be played in the terminal. This game allows users 
 ## How to Play
 
 1. Download the `sudoku.py` file to your computer.
-2. Open a terminal or command prompt.
+2. Open a terminal.
 3. Navigate to the directory containing the `sudoku.py` file.
 4. Run the following command to start the game:
 
