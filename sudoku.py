@@ -145,3 +145,7 @@ def main(stdscr):
 # Run the main function
 if __name__ == "__main__":
     curses.wrapper(main)
+
+# Run the main function
+if __name__ == "__main__":
+    curses.wrapper(main)
