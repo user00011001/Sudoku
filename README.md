@@ -1,6 +1,6 @@
 # Sudoku Terminal Game
 
-A simple Sudoku game that can be played in the terminal. This game allows users to choose a difficulty level and play a randomly generated Sudoku puzzle.
+A simple Sudoku game. This game allows users to choose a difficulty level and play a randomly generated Sudoku puzzle.
 
 ## Requirements
 
@@ -9,7 +9,7 @@ A simple Sudoku game that can be played in the terminal. This game allows users 
 ## Features
 
 - Generate Sudoku puzzles with varying difficulty levels: Easy, Medium, and Hard.
-- Play the game in the terminal with color-coded numbers.
+- Play the game with color-coded numbers.
 - Navigate through the puzzle using arrow keys.
 - Enter numbers directly and receive immediate feedback on the validity of the move.
 - Quit the game at any time by pressing the 'Q' or 'q' key.
