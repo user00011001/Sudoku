@@ -1,151 +1,167 @@
-import pygame
 import random
+import tkinter as tk
+from tkinter import messagebox
 
-pygame.init()
+class SudokuGame:
+    def __init__(self, master):
+        self.master = master
+        master.title("Sudoku")
 
-WINDOW_SIZE = 540
-CELL_SIZE = 60
-grid_surface = pygame.Surface((WINDOW_SIZE, WINDOW_SIZE))
-window = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE + 60))
-pygame.display.set_caption("Sudoku")
+        self.board = [[0 for _ in range(9)] for _ in range(9)]
+        self.solved_board = None
+        self.difficulty = "Easy"
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GRAY = (128, 128, 128)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-DARK_GRAY = (60, 60, 60)
-LIGHT_GRAY = (100, 100, 100)
+        self.create_widgets()
+        self.generate_board()
 
-font = pygame.font.Font(None, 36)
+    def create_widgets(self):
+        self.cells = []
+        for i in range(9):
+            row = []
+            for j in range(9):
+                cell = tk.Entry(self.master, width=3, font=("Arial", 20), justify="center", bg="gray")
+                cell.grid(row=i, column=j, padx=1, pady=1)
+                cell.bind("<KeyRelease>", self.check_cell)
+                row.append(cell)
+                if (i + 1) % 3 == 0 and (j + 1) % 3 == 0:
+                    cell.grid(padx=(1, 5), pady=(1, 5))
+                elif (i + 1) % 3 == 0:
+                    cell.grid(padx=1, pady=(1, 5))
+                elif (j + 1) % 3 == 0:
+                    cell.grid(padx=(1, 5), pady=1)
+            self.cells.append(row)
 
-def is_valid_move(board, row, col, num):
-    for i in range(9):
-        if board[row][i] == num or board[i][col] == num:
-            return False
-    box_row = (row // 3) * 3
-    box_col = (col // 3) * 3
-    for i in range(3):
-        for j in range(3):
-            if board[box_row + i][box_col + j] == num:
+        self.easy_button = tk.Button(self.master, text="Easy", command=lambda: self.set_difficulty("Easy"))
+        self.easy_button.grid(row=9, column=0, columnspan=3, padx=5, pady=5)
+
+        self.medium_button = tk.Button(self.master, text="Medium", command=lambda: self.set_difficulty("Medium"))
+        self.medium_button.grid(row=9, column=3, columnspan=3, padx=5, pady=5)
+
+        self.hard_button = tk.Button(self.master, text="Hard", command=lambda: self.set_difficulty("Hard"))
+        self.hard_button.grid(row=9, column=6, columnspan=3, padx=5, pady=5)
+
+        self.reset_button = tk.Button(self.master, text="Reset", command=self.reset_board)
+        self.reset_button.grid(row=10, column=0, columnspan=4, padx=5, pady=5)
+
+        self.solve_button = tk.Button(self.master, text="Solve", command=self.solve_board)
+        self.solve_button.grid(row=10, column=5, columnspan=4, padx=5, pady=5)
+
+    def set_difficulty(self, difficulty):
+        self.difficulty = difficulty
+        self.generate_board()
+
+    def generate_board(self):
+        self.reset_board()
+        self.generate_solution(self.board)
+        self.solved_board = [row[:] for row in self.board]
+        self.remove_cells()
+        self.fill_board()
+
+    def reset_board(self):
+        self.board = [[0 for _ in range(9)] for _ in range(9)]
+        for i in range(9):
+            for j in range(9):
+                self.cells[i][j].delete(0, tk.END)
+                self.cells[i][j].config(bg="white", state="normal")
+
+    def remove_cells(self):
+        if self.difficulty == "Easy":
+            num_remove = 30
+        elif self.difficulty == "Medium":
+            num_remove = 40
+        else:
+            num_remove = 50
+
+        while num_remove > 0:
+            i, j = random.randint(0, 8), random.randint(0, 8)
+            if self.board[i][j] != 0:
+                self.board[i][j] = 0
+                num_remove -= 1
+
+    def fill_board(self):
+        for i in range(9):
+            for j in range(9):
+                if self.board[i][j] != 0:
+                    self.cells[i][j].delete(0, tk.END)
+                    self.cells[i][j].insert(0, str(self.board[i][j]))
+                    self.cells[i][j].config(state="readonly")
+                else:
+                    self.cells[i][j].delete(0, tk.END)
+                    self.cells[i][j].config(state="normal", bg="gray")
+
+    def generate_solution(self, board):
+        numbers = list(range(1, 10))
+        random.shuffle(numbers)
+
+        find = self.find_empty(board)
+        if not find:
+            return True
+        else:
+            row, col = find
+
+        for num in numbers:
+            if self.valid(board, num, (row, col)):
+                board[row][col] = num
+
+                if self.generate_solution(board):
+                    return True
+
+                board[row][col] = 0
+
+        return False
+
+    def valid(self, board, num, pos):
+        # Check row
+        for i in range(len(board[0])):
+            if board[pos[0]][i] == num and pos[1] != i:
                 return False
-    return True
 
-def find_empty_cell(board):
-    for i in range(9):
-        for j in range(9):
-            if board[i][j] == 0:
-                return i, j
-    return None
+        # Check column
+        for i in range(len(board)):
+            if board[i][pos[1]] == num and pos[0] != i:
+                return False
 
-def generate_puzzle(difficulty):
-    base = 3
-    side = base * base
-    def pattern(r, c):
-        return (base * (r % base) + r // base + c) % side
-    def shuffle(s):
-        return random.sample(s, len(s))
-    rBase = range(base)
-    rows = [g * base + r for g in shuffle(rBase) for r in shuffle(rBase)]
-    cols = [g * base + c for g in shuffle(rBase) for c in shuffle(rBase)]
-    nums = shuffle(range(1, base * base + 1))
-    board = [[nums[pattern(r, c)] for c in cols] for r in rows]
-    squares = side * side
-    empties = squares * difficulty // 10
-    for p in random.sample(range(squares), empties):
-        board[p // side][p % side] = 0
-    return board
+        # Check box
+        box_x = pos[1] // 3
+        box_y = pos[0] // 3
 
-def draw_grid():
-    grid_surface.fill(DARK_GRAY)
-    for i in range(10):
-        line_width = 4 if i % 3 == 0 else 2
-        line_color = WHITE if i % 3 == 0 else GRAY
-        pygame.draw.line(grid_surface, line_color, (i * CELL_SIZE, 0), (i * CELL_SIZE, WINDOW_SIZE), line_width)
-        pygame.draw.line(grid_surface, line_color, (0, i * CELL_SIZE), (WINDOW_SIZE, i * CELL_SIZE), line_width)
+        for i in range(box_y * 3, box_y * 3 + 3):
+            for j in range(box_x * 3, box_x * 3 + 3):
+                if board[i][j] == num and (i, j) != pos:
+                    return False
 
-def draw_numbers(board, user_input, invalid_moves):
-    for i in range(9):
-        for j in range(9):
-            if board[i][j] != 0:
-                num_color = RED if (i, j) in invalid_moves else BLUE if user_input[i][j] else WHITE
-                num_surface = font.render(str(board[i][j]), True, num_color)
-                grid_surface.blit(num_surface, (j * CELL_SIZE + 20, i * CELL_SIZE + 15))
+        return True
 
-def display_buttons():
-    buttons = []
-    labels = ["Easy", "Medium", "Hard", "Reset"]
-    positions = [(50, WINDOW_SIZE + 10), (220, WINDOW_SIZE + 10), (390, WINDOW_SIZE + 10), (220, WINDOW_SIZE + 60)]
-    for label, position in zip(labels, positions):
-        button_rect = pygame.Rect(position[0], position[1], 100, 40)
-        pygame.draw.rect(window, LIGHT_GRAY, button_rect)
-        text_surface = font.render(label, True, WHITE)
-        window.blit(text_surface, (position[0] + 15, position[1] + 10))
-        buttons.append((button_rect, label))
-    return buttons
+    def find_empty(self, board):
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                if board[i][j] == 0:
+                    return i, j
 
-def main():
-    selected_row, selected_col = -1, -1
-    difficulty = None
-    board = None
-    user_input = [[0 for _ in range(9)] for _ in range(9)]
-    invalid_moves = []
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                clicked_pos = pygame.mouse.get_pos()
-                if clicked_pos[1] < WINDOW_SIZE:
-                    selected_col, selected_row = clicked_pos[0] // CELL_SIZE, clicked_pos[1] // CELL_SIZE
-                else:
-                    buttons = display_buttons()
-                    for button, label in buttons:
-                        if button.collidepoint(event.pos):
-                            if label in ["Easy", "Medium", "Hard"]:
-                                difficulty_levels = {"Easy": 3, "Medium": 4, "Hard": 5}
-                                difficulty = difficulty_levels[label]
-                                board = generate_puzzle(difficulty)
-                                user_input = [[0 for _ in range(9)] for _ in range(9)]
-                                invalid_moves = []
-                            elif label == "Reset":
-                                board = generate_puzzle(difficulty)
-                                user_input = [[0 for _ in range(9)] for _ in range(9)]
-                                invalid_moves = []
-            elif event.type == pygame.KEYDOWN and board is not None and selected_row >= 0:
-                if pygame.K_1 <= event.key <= pygame.K_9:
-                    num = event.key - pygame.K_0
-                elif event.key in [pygame.K_KP1, pygame.K_KP2, pygame.K_KP3, pygame.K_KP4, pygame.K_KP5, pygame.K_KP6, pygame.K_KP7, pygame.K_KP8, pygame.K_KP9]:
-                    num = event.key - pygame.K_KP0
-                elif event.key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
-                    board[selected_row][selected_col] = 0
-                    user_input[selected_row][selected_col] = 0
-                    invalid_moves = [(r, c) for r, c in invalid_moves if not (r == selected_row and c == selected_col)]
-                    num = None
-                else:
-                    num = None
+        return None
 
-                if num is not None and (selected_row >= 0 and selected_col >= 0):
-                    if board[selected_row][selected_col] == 0 or (selected_row, selected_col) in invalid_moves:
-                        board[selected_row][selected_col] = num
-                        user_input[selected_row][selected_col] = 1
-                        if is_valid_move(board, selected_row, selected_col, num):
-                            invalid_moves = [(r, c) for r, c in invalid_moves if not (r == selected_row and c == selected_col)]
-                        else:
-                            invalid_moves.append((selected_row, selected_col))
+    def solve_board(self):
+        if self.solved_board is None:
+            messagebox.showinfo("No Solution", "The current board has no solution.")
+        else:
+            for i in range(9):
+                for j in range(9):
+                    self.cells[i][j].delete(0, tk.END)
+                    self.cells[i][j].insert(0, str(self.solved_board[i][j]))
+                    self.cells[i][j].config(bg="green", state="readonly")
 
-        window.fill(DARK_GRAY)
-        draw_grid()
-        if board:
-            draw_numbers(board, user_input, invalid_moves)
-            display_buttons()
-        window.blit(grid_surface, (0, 0))
-        pygame.display.update()
-
-    pygame.quit()
+    def check_cell(self, event):
+        for i in range(9):
+            for j in range(9):
+                if self.cells[i][j] == event.widget:
+                    if event.widget.get() == str(self.solved_board[i][j]):
+                        event.widget.config(bg="green")
+                    elif event.widget.get() != "":
+                        event.widget.config(bg="red")
+                    else:
+                        event.widget.config(bg="gray")
 
 if __name__ == "__main__":
-    main()
- 
+    root = tk.Tk()
+    game = SudokuGame(root)
+    root.mainloop()
